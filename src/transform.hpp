@@ -1,6 +1,6 @@
 #pragma once
 
-#include "glm_common.hpp"
+#include "bw/engine/glm.h"
 #include "utils.hpp"
 
 namespace cubexx {

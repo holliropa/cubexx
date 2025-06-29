@@ -1,6 +1,6 @@
 #pragma once
 
-#include "glm_common.hpp"
+#include "bw/engine/glm.h"
 
 namespace cubexx::utils {
     constexpr glm::vec3 RIGHT = {1.0f, 0.0f, 0.0f};

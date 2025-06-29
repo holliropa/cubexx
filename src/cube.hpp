@@ -1,19 +1,18 @@
 #pragma once
 
-#include "gl_common.hpp"
 #include "transform.hpp"
-#include "game_object.hpp"
+#include "bw/engine/game_object.h"
+#include "bw/engine/gl.h"
 
 namespace cubexx {
-    class Cube : public GameObject {
+    class Cube final : public bw::engine::GameObject {
     public:
         Transform transform;
 
         Cube();
 
-        void Update(float delta) override;
-
-        void Render(const Camera& camera) const override;
+        void update(float deltaTime) override;
+        void render(const bw::engine::Camera& camera) override;
 
     private:
         glad::Program shaderProgram_;

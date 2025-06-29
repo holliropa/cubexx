@@ -3,9 +3,10 @@
 #include <unordered_set>
 #include <future>
 #include <algorithm>
-#include "cubexx/world.hpp"
-#include "cubexx/input.hpp"
+
+#include "world.hpp"
 #include "stb_image.h"
+#include "bw/engine/input.h"
 
 namespace cubexx {
     auto worldVertexShaderSource = R"(
@@ -53,10 +54,34 @@ void main() {
 })";
     constexpr unsigned CHUNKS_PER_FRAME = 7;
 
-    World::World(Camera* camera)
+    std::vector<glm::ivec3> getSpherePoints(const glm::ivec3& center, const int r) {
+        std::vector<glm::ivec3> points;
+        const auto r_squared = r * r;
+        for (auto x = -r; x <= r; ++x) {
+            const auto x_squared = x * x;
+            const auto remaining_squared_y = r_squared - x_squared;
+            if (remaining_squared_y < 0)
+                continue;
+
+            const auto y_max = static_cast<int>(sqrt(remaining_squared_y));
+            for (auto y = -y_max; y <= y_max; ++y) {
+                const auto y_squared = y * y;
+                const auto remaining_squared_z = remaining_squared_y - y_squared;
+                if (remaining_squared_z < 0)
+                    continue;
+                const auto z_max = static_cast<int>(sqrt(remaining_squared_z));
+                for (auto z = -z_max; z <= z_max; ++z) {
+                    points.emplace_back(center + glm::ivec3{x, y, z});
+                }
+            }
+        }
+        return points;
+    }
+
+    World::World(const std::shared_ptr<Camera>& camera)
         : camera_(camera) {}
 
-    void World::Initialize() {
+    void World::init() {
         auto vertexShader = glad::VertexShader();
         vertexShader.set_source(worldVertexShaderSource);
 
@@ -88,8 +113,8 @@ void main() {
         }
     }
 
-    void World::Update(float delta) {
-        if (Input::GetKeyDown(glfw::KeyCode::T)) {
+    void World::update(float deltaTime) {
+        if (bw::engine::Input::GetKeyDown(glfw::KeyCode::T)) {
             enabled_ = !enabled_;
         }
 
@@ -105,11 +130,11 @@ void main() {
 
             // Sort chunks by distance to player (closest first)
             std::sort(loadingQueue_.begin(), loadingQueue_.end(),
-                [this](const glm::ivec3& a, const glm::ivec3& b) {
-                    auto distA = glm::distance2(glm::vec3(a), glm::vec3(userChunkIndex_));
-                    auto distB = glm::distance2(glm::vec3(b), glm::vec3(userChunkIndex_));
-                    return distA < distB;
-                });
+                      [this](const glm::ivec3& a, const glm::ivec3& b) {
+                          auto distA = glm::distance2(glm::vec3(a), glm::vec3(userChunkIndex_));
+                          auto distB = glm::distance2(glm::vec3(b), glm::vec3(userChunkIndex_));
+                          return distA < distB;
+                      });
 
             check_ = false;
         }
@@ -128,45 +153,19 @@ void main() {
             }
             pChunks_[chunkPos] = chunk;
         }
-    }
 
-    std::vector<glm::ivec3> getSpherePoints(const glm::ivec3& center, int r) {
-        std::vector<glm::ivec3> points;
-        const auto r_squared = r * r;
-        for (auto x = -r; x <= r; ++x) {
-            const auto x_squared = x * x;
-            const auto remaining_squared_y = r_squared - x_squared;
-            if (remaining_squared_y < 0)
-                continue;
 
-            const auto y_max = static_cast<int>(sqrt(remaining_squared_y));
-            for (auto y = -y_max; y <= y_max; ++y) {
-                const auto y_squared = y * y;
-                const auto remaining_squared_z = remaining_squared_y - y_squared;
-                if (remaining_squared_z < 0)
-                    continue;
-                const auto z_max = static_cast<int>(sqrt(remaining_squared_z));
-                for (auto z = -z_max; z <= z_max; ++z) {
-                    points.emplace_back(center + glm::ivec3{x, y, z});
-                }
-            }
-        }
-        return points;
-    }
-
-    void World::LateUpdate(float delta) {
-        auto currentChunkIndex = glm::ivec3(glm::floor(camera_->transform.position * (1.0f / Chunk::SIZE)));
-
-        if (currentChunkIndex != userChunkIndex_ && enabled_) {
+        if (auto currentChunkIndex = glm::ivec3(glm::floor(camera_->transform.position * (1.0f / Chunk::SIZE)));
+            currentChunkIndex != userChunkIndex_ && enabled_) {
             userChunkIndex_ = currentChunkIndex;
             visibleChunks_ = getSpherePoints(userChunkIndex_, 10);
             check_ = true;
         }
     }
 
-    void World::Render(const Camera& camera) const {
-        auto view = camera.getView();
-        auto projection = camera.getProjection();
+    void World::render(const bw::engine::Camera& camera) {
+        auto view = camera.get_view();
+        auto projection = camera.get_projection();
 
         glad::Bind(shaderProgram_);
         auto model_u = glad::UniformMat4(shaderProgram_, "model");
@@ -178,9 +177,9 @@ void main() {
         auto lightColorUniform = glad::UniformVec3(shaderProgram_, "lightColor");
         auto ambientColorUniform = glad::UniformVec3(shaderProgram_, "ambientColor");
 
-        glm::vec3 lightDirection(-0.2f, -1.0f, -0.3f);
-        glm::vec3 lightColor(0.8f, 0.8f, 0.8f);
-        glm::vec3 ambient(0.2f, 0.2f, 0.2f);
+        constexpr glm::vec3 lightDirection(-0.2f, -1.0f, -0.3f);
+        constexpr glm::vec3 lightColor(0.8f, 0.8f, 0.8f);
+        constexpr glm::vec3 ambient(0.2f, 0.2f, 0.2f);
 
         lightDirUniform.set(glm::value_ptr(lightDirection));
         lightColorUniform.set(glm::value_ptr(lightColor));
@@ -206,7 +205,7 @@ void main() {
                 continue;
 
             auto model = glm::translate(transform_.getMatrix(),
-                                      glm::vec3(chunkIndex) * static_cast<float>(Chunk::SIZE));
+                                        glm::vec3(chunkIndex) * static_cast<float>(Chunk::SIZE));
 
             model_u.set(glm::value_ptr(model));
 

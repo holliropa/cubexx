@@ -1,4 +1,4 @@
-#include "cubexx/cube.hpp"
+#include "cube.hpp"
 
 namespace
 cubexx {
@@ -100,13 +100,13 @@ void main() {
             .enable();
     }
 
-    void Cube::Update(float delta) {
-        transform.rotation += glm::vec3(0.3f, 0.7f, 0.5f) * delta * 90.0f;
+    void Cube::update(float deltaTime) {
+        transform.rotation += glm::vec3(0.3f, 0.7f, 0.5f) * deltaTime * 90.0f;
     }
 
-    void Cube::Render(const Camera& camera) const {
-        auto view = camera.getView();
-        auto projection = camera.getProjection();
+    void Cube::render(const bw::engine::Camera& camera) {
+        auto view = camera.get_view();
+        auto projection = camera.get_projection();
 
         glad::Bind(shaderProgram_);
         auto model_u = glad::UniformMat4(shaderProgram_, "model");

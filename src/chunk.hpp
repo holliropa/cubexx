@@ -1,7 +1,7 @@
 #pragma once
 
-#include "gl_common.hpp"
-#include "glm_common.hpp"
+#include "bw/engine/gl.h"
+#include "bw/engine/glm.h"
 
 namespace cubexx {
     class Chunk {

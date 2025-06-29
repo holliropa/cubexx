@@ -1,31 +1,29 @@
 #pragma once
 
-#include <memory>
-#include <set>
 #include <queue>
-#include "gl_common.hpp"
-#include "game_object.hpp"
-#include "chunk.hpp"
-#include "world_generator.hpp"
-#include "chunk_mesh_generator.hpp"
 #include <unordered_set>
 
+#include "camera.h"
+#include "chunk_mesh_generator.hpp"
+#include "world_generator.hpp"
+#include "bw/engine/game_object.h"
+#include "bw/engine/gl.h"
+
+
 namespace cubexx {
-    class World : public GameObject {
+    class World final : public bw::engine::GameObject {
     public:
-        explicit World(Camera* camera);
+        explicit World(const std::shared_ptr<Camera>& camera);
 
-        void Initialize() override;
+        void init() override;
 
-        void Update(float delta) override;
+        void update(float deltaTime) override;
 
-        void LateUpdate(float delta) override;
-
-        void Render(const Camera& camera) const override;
+        void render(const bw::engine::Camera& camera) override;
 
     private:
         bool enabled_ = false;
-        Camera* camera_;
+        std::shared_ptr<Camera> camera_;
         Transform transform_;
         glm::ivec3 userChunkIndex_ = glm::zero<glm::ivec3>();
         glad::Program shaderProgram_;

@@ -1,6 +1,7 @@
 #include <iostream>
-#include "cubexx/grid.hpp"
-#include "cubexx/input.hpp"
+#include "grid.hpp"
+
+#include "bw/engine/input.h"
 
 namespace cubexx {
     auto gridVertexShader = R"(
@@ -132,7 +133,10 @@ void main()
     FragColor = Color;
 })";
 
-    void Grid::Initialize() {
+    Grid::Grid(const std::shared_ptr<Camera>& camera)
+        : camera_(camera) {}
+
+    void Grid::init() {
         auto vertexShader = glad::VertexShader();
         vertexShader.set_source(gridVertexShader);
 
@@ -143,13 +147,13 @@ void main()
         shaderProgram_.link();
     }
 
-    void Grid::Update(float delta) {
-        if (Input::GetKeyDown(glfw::KeyCode::K)) {
+    void Grid::update(float deltaTime) {
+        if (bw::engine::Input::GetKeyDown(glfw::KeyCode::K)) {
             enabled_ = !enabled_;
         }
     }
 
-    void Grid::Render(const cubexx::Camera& camera) const {
+    void Grid::render(const bw::engine::Camera& camera) {
         if (!enabled_)
             return;
 
@@ -158,9 +162,9 @@ void main()
         auto projection_u = glad::UniformMat4(shaderProgram_, "projection");
         auto cameraWorldPos_u = glad::UniformVec3(shaderProgram_, "gCameraWorldPos");
 
-        view_u.set(glm::value_ptr(camera.getView()));
-        projection_u.set(glm::value_ptr(camera.getProjection()));
-        cameraWorldPos_u.set(glm::value_ptr(camera.transform.position));
+        view_u.set(glm::value_ptr(camera.get_view()));
+        projection_u.set(glm::value_ptr(camera.get_projection()));
+        cameraWorldPos_u.set(glm::value_ptr(camera_->transform.position));
 
         glad::DrawArrays(glad::PrimitiveType::Triangles, 6);
         std::cout << glGetError() << std::endl;

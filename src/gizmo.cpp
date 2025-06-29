@@ -1,6 +1,6 @@
-#include <iostream>
-#include "cubexx/gizmo.hpp"
-#include "cubexx/input.hpp"
+#include "gizmo.hpp"
+
+#include "bw/engine/input.h"
 
 namespace cubexx {
     auto gizmoArrowVertexShader = R"(
@@ -36,7 +36,7 @@ void main() {
         glm::vec3 color;
     };
 
-    void Gizmo::Initialize() {
+    void Gizmo::init() {
         std::vector<GizmoArrowVertex> vertices;
 
         //X-axis
@@ -97,13 +97,13 @@ void main() {
         shaderProgram_.link();
     }
 
-    void Gizmo::Update(float delta) {
-        if (Input::GetKeyDown(glfw::enums::KeyCode::G)) {
+    void Gizmo::update(float deltaTime) {
+        if (bw::engine::Input::GetKeyDown(glfw::enums::KeyCode::G)) {
             enabled_ = !enabled_;
         }
     }
 
-    void Gizmo::Render(const Camera& camera) const {
+    void Gizmo::render(const bw::engine::Camera& camera) {
         if (!enabled_)
             return;
 
@@ -117,8 +117,8 @@ void main() {
         model = glm::translate(model, glm::zero<glm::vec3>());
         model = glm::scale(model, glm::vec3(10000.0f));
         model_u.set(glm::value_ptr(model));
-        view_u.set(glm::value_ptr(camera.getView()));
-        projection_u.set(glm::value_ptr(camera.getProjection()));
+        view_u.set(glm::value_ptr(camera.get_view()));
+        projection_u.set(glm::value_ptr(camera.get_projection()));
 
         glad::TemporaryLineWidth temporaryLineWidth(4.0f);
         glad::Bind(vertexArray_);
