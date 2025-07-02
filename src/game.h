@@ -1,6 +1,6 @@
 #pragma once
 
-#include "camera.h"
+#include "core/camera.h"
 #include "bw/engine/application.h"
 #include "bw/engine/engine.h"
 #include "bw/engine/game.h"

@@ -1,4 +1,4 @@
-#include "gizmo.hpp"
+#include "gizmo.h"
 
 #include "bw/engine/input.h"
 

@@ -1,10 +1,10 @@
 #pragma once
 
 #include <memory>
-#include "chunk.hpp"
+#include "chunk.h"
 
 namespace cubexx {
-    class WorldGenerator {
+    class ChunkMeshGenerator {
     public:
         void Generate(const std::shared_ptr<Chunk>& chunk);
     };

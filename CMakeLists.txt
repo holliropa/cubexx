@@ -10,15 +10,15 @@ add_subdirectory(extern/stb)
 
 add_executable(${PROJECT_NAME}
         src/main.cpp
-        src/chunk_mesh_generator.cpp
-        src/cube.cpp
+        src/core/utils.cpp
+        src/game/chunk_mesh_generator.cpp
+        src/game/cube.cpp
+        src/game/gizmo.cpp
+        src/game/grid.cpp
+        src/game/player.cpp
+        src/game/world.cpp
+        src/game/world_generator.cpp
         src/game.cpp
-        src/gizmo.cpp
-        src/grid.cpp
-        src/player.cpp
-        src/utils.cpp
-        src/world.cpp
-        src/world_generator.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

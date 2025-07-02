@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "camera.h"
+#include "../core/camera.h"
 #include "bw/engine/game_object.h"
 #include "bw/engine/gl.h"
 

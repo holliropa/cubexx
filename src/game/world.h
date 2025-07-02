@@ -3,9 +3,9 @@
 #include <queue>
 #include <unordered_set>
 
-#include "camera.h"
-#include "chunk_mesh_generator.hpp"
-#include "world_generator.hpp"
+#include "../core/camera.h"
+#include "chunk_mesh_generator.h"
+#include "world_generator.h"
 #include "bw/engine/game_object.h"
 #include "bw/engine/gl.h"
 

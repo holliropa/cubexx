@@ -1,4 +1,4 @@
-#include "chunk_mesh_generator.hpp"
+#include "chunk_mesh_generator.h"
 
 namespace cubexx {
     struct CubeVertex {

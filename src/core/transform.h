@@ -1,7 +1,7 @@
 #pragma once
 
 #include "bw/engine/glm.h"
-#include "utils.hpp"
+#include "utils.h"
 
 namespace cubexx {
     struct Transform {

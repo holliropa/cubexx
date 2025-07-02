@@ -1,8 +1,8 @@
 #include "game.h"
 
-#include "player.h"
-#include "world.hpp"
-#include "gizmo.hpp"
+#include "game/player.h"
+#include "game/world.h"
+#include "game/gizmo.h"
 
 namespace cubexx {
     Game::Game(bw::engine::Application& application, bw::engine::Engine& engine)

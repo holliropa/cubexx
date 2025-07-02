@@ -1,4 +1,4 @@
-#include "cube.hpp"
+#include "cube.h"
 
 namespace
 cubexx {

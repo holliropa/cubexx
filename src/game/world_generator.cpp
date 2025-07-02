@@ -1,4 +1,4 @@
-#include "world_generator.hpp"
+#include "world_generator.h"
 #include "stb_perlin.h"
 
 namespace cubexx {

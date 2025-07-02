@@ -1,5 +1,5 @@
 #include <iostream>
-#include "grid.hpp"
+#include "grid.h"
 
 #include "bw/engine/input.h"
 
