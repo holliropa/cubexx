@@ -1,5 +1,6 @@
 #include <iostream>
-#include "grid.h"
+
+#include "grid_object.h"
 
 #include "bw/engine/input.h"
 
@@ -133,10 +134,10 @@ void main()
     FragColor = Color;
 })";
 
-    Grid::Grid(const std::shared_ptr<Camera>& camera)
+    GridObject::GridObject(const std::shared_ptr<Camera>& camera)
         : camera_(camera) {}
 
-    void Grid::init() {
+    void GridObject::init() {
         auto vertexShader = glad::VertexShader();
         vertexShader.set_source(gridVertexShader);
 
@@ -147,13 +148,13 @@ void main()
         shaderProgram_.link();
     }
 
-    void Grid::update(float deltaTime) {
+    void GridObject::update(float deltaTime) {
         if (bw::engine::Input::GetKeyDown(glfw::KeyCode::K)) {
             enabled_ = !enabled_;
         }
     }
 
-    void Grid::render(const bw::engine::Camera& camera) {
+    void GridObject::render(const bw::engine::Camera& camera) {
         if (!enabled_)
             return;
 

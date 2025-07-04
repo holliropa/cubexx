@@ -2,14 +2,15 @@
 
 #include <memory>
 
-#include "../core/camera.h"
-#include "bw/engine/game_object.h"
+#include "bw/engine/base_object.h"
 #include "bw/engine/gl.h"
 
+#include "../../core/camera.h"
+
 namespace cubexx {
-    class Grid final : public bw::engine::GameObject {
+    class GridObject final : public bw::engine::BaseObject {
     public:
-        explicit Grid(const std::shared_ptr<Camera>& camera);
+        explicit GridObject(const std::shared_ptr<Camera>& camera);
 
         void init() override;
         void update(float deltaTime) override;

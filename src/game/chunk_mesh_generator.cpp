@@ -15,12 +15,14 @@ namespace cubexx {
         const glm::vec3* faceVertices,
         glm::vec2* faceUV
     ) {
-        const auto index = vertices.size(); // Track current vertex index
+        const auto index = vertices.size(); // Track the current vertex index
 
         // Add the 4 vertices of the face
         for (int i = 0; i < 4; i++) {
+            glm::vec3 vertex = position + faceVertices[i];
+            vertex = glm::round(vertex);
             vertices.emplace_back(CubeVertex{
-                .position{position + faceVertices[i]},
+                .position{vertex},
                 .normal{normal},
                 .uv{faceUV[i]},
             });
@@ -41,12 +43,12 @@ namespace cubexx {
         std::vector<CubeVertex> vertices;
         std::vector<GLuint> indices;
 
-        for (int x = 0; x < Chunk::SIZE; ++x) {
-            for (int y = 0; y < Chunk::SIZE; ++y) {
-                for (int z = 0; z < Chunk::SIZE; ++z) {
-                    if (chunk->cubes[x][y][z] == 0) continue;
+        for (int x = 0; x < CHUNK_SIZE; ++x) {
+            for (int y = 0; y < CHUNK_SIZE; ++y) {
+                for (int z = 0; z < CHUNK_SIZE; ++z) {
+                    if (chunk->data.cubes[x][y][z] == 0) continue;
 
-                    glm::vec3 rightFace[4] = {
+                    constexpr glm::vec3 rightFace[4] = {
                         {1, 0, 0},
                         {1, 1, 0},
                         {1, 1, 1},
@@ -59,7 +61,7 @@ namespace cubexx {
                         {0, 0},
                     };
 
-                    glm::vec3 leftFace[4] = {
+                    constexpr glm::vec3 leftFace[4] = {
                         {0, 0, 0},
                         {0, 0, 1},
                         {0, 1, 1},
@@ -72,7 +74,7 @@ namespace cubexx {
                         {0, 1},
                     };
 
-                    glm::vec3 topFace[4] = {
+                    constexpr glm::vec3 topFace[4] = {
                         {0, 1, 0},
                         {0, 1, 1},
                         {1, 1, 1},
@@ -85,7 +87,7 @@ namespace cubexx {
                         {1, 1},
                     };
 
-                    glm::vec3 bottomFace[4] = {
+                    constexpr glm::vec3 bottomFace[4] = {
                         {0, 0, 0},
                         {1, 0, 0},
                         {1, 0, 1},
@@ -98,7 +100,7 @@ namespace cubexx {
                         {0, 1},
                     };
 
-                    glm::vec3 frontFace[4] = {
+                    constexpr glm::vec3 frontFace[4] = {
                         {0, 0, 1},
                         {1, 0, 1},
                         {1, 1, 1},
@@ -111,7 +113,7 @@ namespace cubexx {
                         {0, 1},
                     };
 
-                    glm::vec3 backFace[4] = {
+                    constexpr glm::vec3 backFace[4] = {
                         {0, 0, 0},
                         {0, 1, 0},
                         {1, 1, 0},
@@ -125,28 +127,28 @@ namespace cubexx {
                     };
 
 
-                    if (x + 1 == Chunk::SIZE || chunk->cubes[x + 1][y][z] == 0)
+                    if (x + 1 == CHUNK_SIZE || chunk->data.cubes[x + 1][y][z] == 0)
                         addFace(vertices, indices, {x, y, z}, {1, 0, 0}, rightFace, rightUV);
-                    if (x - 1 == -1 || chunk->cubes[x - 1][y][z] == 0)
+                    if (x - 1 == -1 || chunk->data.cubes[x - 1][y][z] == 0)
                         addFace(vertices, indices, {x, y, z}, {-1, 0, 0}, leftFace, leftUV);
-                    if (y + 1 == Chunk::SIZE || chunk->cubes[x][y + 1][z] == 0)
+                    if (y + 1 == CHUNK_SIZE || chunk->data.cubes[x][y + 1][z] == 0)
                         addFace(vertices, indices, {x, y, z}, {0, 1, 0}, topFace, topUV);
-                    if (y - 1 == -1 || chunk->cubes[x][y - 1][z] == 0)
+                    if (y - 1 == -1 || chunk->data.cubes[x][y - 1][z] == 0)
                         addFace(vertices, indices, {x, y, z}, {0, -1, 0}, bottomFace, bottomUV);
-                    if (z + 1 == Chunk::SIZE || chunk->cubes[x][y][z + 1] == 0)
+                    if (z + 1 == CHUNK_SIZE || chunk->data.cubes[x][y][z + 1] == 0)
                         addFace(vertices, indices, {x, y, z}, {0, 0, 1}, frontFace, frontUV);
-                    if (z - 1 == -1 || chunk->cubes[x][y][z - 1] == 0)
+                    if (z - 1 == -1 || chunk->data.cubes[x][y][z - 1] == 0)
                         addFace(vertices, indices, {x, y, z}, {0, 0, -1}, backFace, backUV);
                 }
             }
         }
 
-        chunk->index_count = indices.size();
+        chunk->meshData->index_count = indices.size();
 
-        glad::Bind(chunk->vertexArray);
+        glad::Bind(chunk->meshData->vertexArray);
 
-        chunk->arrayBuffer.data(sizeof(CubeVertex) * vertices.size(), vertices.data());
-        chunk->elementArrayBuffer.data(sizeof(GLuint) * indices.size(), indices.data());
+        chunk->meshData->arrayBuffer.data(sizeof(CubeVertex) * vertices.size(), vertices.data());
+        chunk->meshData->elementArrayBuffer.data(sizeof(GLuint) * indices.size(), indices.data());
 
         glad::VertexAttribute(0)
             .pointer(3,

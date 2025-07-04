@@ -2,14 +2,13 @@
 
 #include <memory>
 
-#include "../core/camera.h"
-#include "bw/engine/game_object.h"
-
+#include "../../core/camera.h"
+#include "bw/engine/base_object.h"
 
 namespace cubexx {
-    class Player final : public bw::engine::GameObject {
+    class PlayerObject final : public bw::engine::BaseObject {
     public:
-        explicit Player(const std::shared_ptr<Camera>& camera);
+        explicit PlayerObject(const std::shared_ptr<Camera>& camera);
 
         void init() override;
 

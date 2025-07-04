@@ -7,17 +7,17 @@ namespace cubexx {
         constexpr int AMPLITUDE = 16;
         constexpr float FREQUENCY = 0.01f;
 
-        const glm::ivec3 chunkPos = chunk->position;
+        const glm::ivec3 chunkPos = chunk->index;
 
-        std::array<std::array<int, Chunk::SIZE>, Chunk::SIZE> heightmap{};
-        for (int x = 0; x < Chunk::SIZE; ++x) {
-            for (int z = 0; z < Chunk::SIZE; ++z) {
-                int worldX = chunkPos.x * Chunk::SIZE + x;
-                int worldZ = chunkPos.z * Chunk::SIZE + z;
+        std::array<std::array<int, CHUNK_SIZE>, CHUNK_SIZE> heightmap{};
+        for (int x = 0; x < CHUNK_SIZE; ++x) {
+            for (int z = 0; z < CHUNK_SIZE; ++z) {
+                const int worldX = chunkPos.x * CHUNK_SIZE + x;
+                const int worldZ = chunkPos.z * CHUNK_SIZE + z;
 
-                float noise = stb_perlin_noise3(
-                    worldX * FREQUENCY,
-                    worldZ * FREQUENCY,
+                const float noise = stb_perlin_noise3(
+                    static_cast<float>(worldX) * FREQUENCY,
+                    static_cast<float>(worldZ) * FREQUENCY,
                     0, 0, 0, 0
                 );
 
@@ -25,18 +25,18 @@ namespace cubexx {
             }
         }
 
-        for (int x = 0; x < Chunk::SIZE; ++x) {
-            for (int z = 0; z < Chunk::SIZE; ++z) {
-                int height = heightmap[x][z];
-                for (int y = 0; y < Chunk::SIZE; ++y) {
-                    int worldY = chunkPos.y * Chunk::SIZE + y;
+        for (int x = 0; x < CHUNK_SIZE; ++x) {
+            for (int z = 0; z < CHUNK_SIZE; ++z) {
+                const int height = heightmap[x][z];
+                for (int y = 0; y < CHUNK_SIZE; ++y) {
+                    const int worldY = chunkPos.y * CHUNK_SIZE + y;
 
                     if (worldY < height) {
-                        chunk->isEmpty_ = false;
-                        chunk->cubes[x][y][z] = 1;
+                        chunk->data.isEmpty = false;
+                        chunk->data.cubes[x][y][z] = 1;
                     }
                     else {
-                        chunk->cubes[x][y][z] = 0;
+                        chunk->data.cubes[x][y][z] = 0;
                     }
                 }
             }

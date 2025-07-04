@@ -4,8 +4,8 @@
 #include "bw/engine/application.h"
 #include "bw/engine/engine.h"
 
-const unsigned int WIDTH = 600;
-const unsigned int HEIGHT = 600;
+constexpr unsigned int WIDTH = 1920;
+constexpr unsigned int HEIGHT = 1080;
 
 int main() {
     try {

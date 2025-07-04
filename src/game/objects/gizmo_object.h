@@ -1,10 +1,10 @@
 #pragma once
 
-#include "bw/engine/game_object.h"
+#include "bw/engine/base_object.h"
 #include "bw/engine/gl.h"
 
 namespace cubexx {
-    class Gizmo final : public bw::engine::GameObject {
+    class GizmoObject final : public bw::engine::BaseObject {
     public:
         void init() override;
         void update(float deltaTime) override;

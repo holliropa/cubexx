@@ -1,4 +1,4 @@
-#include "gizmo.h"
+#include "gizmo_object.h"
 
 #include "bw/engine/input.h"
 
@@ -36,7 +36,7 @@ void main() {
         glm::vec3 color;
     };
 
-    void Gizmo::init() {
+    void GizmoObject::init() {
         std::vector<GizmoArrowVertex> vertices;
 
         //X-axis
@@ -97,13 +97,13 @@ void main() {
         shaderProgram_.link();
     }
 
-    void Gizmo::update(float deltaTime) {
+    void GizmoObject::update(float deltaTime) {
         if (bw::engine::Input::GetKeyDown(glfw::enums::KeyCode::G)) {
             enabled_ = !enabled_;
         }
     }
 
-    void Gizmo::render(const bw::engine::Camera& camera) {
+    void GizmoObject::render(const bw::engine::Camera& camera) {
         if (!enabled_)
             return;
 

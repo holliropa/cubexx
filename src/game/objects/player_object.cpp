@@ -1,25 +1,25 @@
 #include <cmath>
 
-#include "player.h"
+#include "player_object.h"
 #include "bw/engine/input.h"
 
 namespace cubexx {
-    Player::Player(const std::shared_ptr<Camera>& camera)
+    PlayerObject::PlayerObject(const std::shared_ptr<Camera>& camera)
         : camera_(camera) {}
 
-    void Player::init() {
+    void PlayerObject::init() {
         camera_->transform.position.y = 75.0f;
         camera_->fov = 45.0f;
         camera_->m_zNear = 0.1f;
         camera_->m_zFar = 10000.0f;
     }
 
-    void Player::update(float deltaTime) {
+    void PlayerObject::update(float deltaTime) {
         if (bw::engine::Input::GetKeyPressed(glfw::KeyCode::M)) {
-            speed_ += 0.25f;
+            speed_ += 0.5f;
         }
         if (bw::engine::Input::GetKeyPressed(glfw::KeyCode::N)) {
-            speed_ -= 0.25f;
+            speed_ -= 0.5f;
         }
 
         // Define movement and rotation speed

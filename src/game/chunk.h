@@ -4,20 +4,23 @@
 #include "bw/engine/glm.h"
 
 namespace cubexx {
-    class Chunk {
-    public:
-        static constexpr int SIZE = 32;
+    static constexpr int CHUNK_SIZE = 32;
 
-        std::array<std::array<std::array<uint32_t, SIZE>, SIZE>, SIZE> cubes;
-        glm::ivec3 position;
+    struct ChunkData {
+        std::array<std::array<std::array<uint32_t, CHUNK_SIZE>, CHUNK_SIZE>, CHUNK_SIZE> cubes;
+        bool isEmpty = true;
+    };
+
+    struct ChunkMeshData {
         glad::VertexArray vertexArray;
         glad::ArrayBuffer arrayBuffer;
         glad::ElementArrayBuffer elementArrayBuffer;
         GLsizei index_count;
-        bool isEmpty_ = true;
+    };
 
-        [[nodiscard]] bool isEmpty() const {
-            return isEmpty_;
-        }
+    struct Chunk {
+        ChunkData data{};
+        std::unique_ptr<ChunkMeshData> meshData;
+        glm::ivec3 index{};
     };
 }
