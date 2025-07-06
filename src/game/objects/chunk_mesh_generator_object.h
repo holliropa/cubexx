@@ -4,16 +4,19 @@
 
 #include "../chunk_mesh_generator.h"
 #include "../world.h"
+#include "../config.h"
 
 namespace cubexx {
     class ChunkMeshGeneratorObject final : public bw::engine::BaseObject {
     public:
-        ChunkMeshGeneratorObject(const std::shared_ptr<World>& world,
+        ChunkMeshGeneratorObject(const std::shared_ptr<Config>& config,
+                                 const std::shared_ptr<World>& world,
                                  const std::shared_ptr<ChunkMeshGenerator>& chunk_mesh_generator);
 
         void update(float deltaTime) override;
 
     private:
+        std::shared_ptr<Config> config_;
         std::shared_ptr<World> world_;
         std::shared_ptr<ChunkMeshGenerator> chunk_mesh_generator_;
     };

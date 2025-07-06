@@ -34,15 +34,16 @@ namespace cubexx {
         camera_ = main_camera_;
         main_camera_->m_plane = {w_width, w_height};
 
+        config_ = std::make_shared<Config>();
         world_ = std::make_shared<World>();
         world_generator_ = std::make_shared<WorldGenerator>();
         chunk_mesh_generator_ = std::make_shared<ChunkMeshGenerator>();
 
         const auto player = std::make_shared<PlayerObject>(main_camera_);
         const auto gizmo = std::make_shared<GizmoObject>();
-        const auto world = std::make_shared<WorldObject>(main_camera_, world_);
-        const auto chunk_generator = std::make_shared<ChunkGeneratorObject>(world_, world_generator_);
-        const auto chunk_mesh_generator = std::make_shared<ChunkMeshGeneratorObject>(world_, chunk_mesh_generator_);
+        const auto world = std::make_shared<WorldObject>(config_, main_camera_, world_);
+        const auto chunk_generator = std::make_shared<ChunkGeneratorObject>(config_, world_, world_generator_);
+        const auto chunk_mesh_generator = std::make_shared<ChunkMeshGeneratorObject>(config_, world_, chunk_mesh_generator_);
         const auto worldRenderer = std::make_shared<WorldRendererObject>(world_);
         const auto chunk_unloader = std::make_shared<ChunkUnloaderObject>(world_);
 

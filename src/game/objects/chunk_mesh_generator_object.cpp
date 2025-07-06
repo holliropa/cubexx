@@ -1,14 +1,13 @@
 #include "chunk_mesh_generator_object.h"
 
 namespace cubexx {
-    constexpr unsigned CHUNKS_PER_FRAME = 7;
-
-    ChunkMeshGeneratorObject::ChunkMeshGeneratorObject(const std::shared_ptr<World>& world,
+    ChunkMeshGeneratorObject::ChunkMeshGeneratorObject(const std::shared_ptr<Config>& config,
+                                                       const std::shared_ptr<World>& world,
                                                        const std::shared_ptr<ChunkMeshGenerator>& chunk_mesh_generator)
-        : world_(world), chunk_mesh_generator_(chunk_mesh_generator) {}
+        : config_(config), world_(world), chunk_mesh_generator_(chunk_mesh_generator) {}
 
     void ChunkMeshGeneratorObject::update(float deltaTime) {
-        for (unsigned i = 0; i < CHUNKS_PER_FRAME; ++i) {
+        for (unsigned i = 0; i < config_->ChunkMeshesPerFrame; ++i) {
             if (world_->chunksToGenerateMesh.empty())
                 return;
 

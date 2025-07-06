@@ -5,16 +5,19 @@
 
 #include "../world_generator.h"
 #include "../world.h"
+#include "../config.h"
 
 namespace cubexx {
     class ChunkGeneratorObject final : public bw::engine::BaseObject {
     public:
-        ChunkGeneratorObject(const std::shared_ptr<World>& world,
+        ChunkGeneratorObject(const std::shared_ptr<Config>& config,
+                             const std::shared_ptr<World>& world,
                              const std::shared_ptr<WorldGenerator>& worldGenerator);
 
         void update(float deltaTime) override;
 
     private:
+        std::shared_ptr<Config> config_;
         std::shared_ptr<World> world_;
         std::shared_ptr<WorldGenerator> worldGenerator_;
     };

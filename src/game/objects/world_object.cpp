@@ -32,8 +32,10 @@ namespace cubexx {
         return points;
     }
 
-    WorldObject::WorldObject(const std::shared_ptr<Camera>& camera, const std::shared_ptr<World>& world)
-        : camera_(camera), world_(world) {}
+    WorldObject::WorldObject(const std::shared_ptr<Config>& config,
+                             const std::shared_ptr<Camera>& camera,
+                             const std::shared_ptr<World>& world)
+        : config_(config), camera_(camera), world_(world) {}
 
     void WorldObject::init() {
         userChunkIndex_ = glm::ivec3(glm::floor(camera_->transform.position * (1.0f / CHUNK_SIZE)));
@@ -43,7 +45,7 @@ namespace cubexx {
         const auto currentChunkIndex = glm::ivec3(glm::floor(camera_->transform.position * (1.0f / CHUNK_SIZE)));
         if (currentChunkIndex != userChunkIndex_ || first_) {
             userChunkIndex_ = currentChunkIndex;
-            auto chunksInView = getSpherePoints(userChunkIndex_, 10);
+            auto chunksInView = getSpherePoints(userChunkIndex_, static_cast<int>(config_->ViewDistance));
 
             std::sort(chunksInView.begin(), chunksInView.end(),
                       [this](const glm::ivec3& a, const glm::ivec3& b) {
@@ -53,35 +55,22 @@ namespace cubexx {
                       });
 
             world_->visibleChunks = std::unordered_set(chunksInView.begin(), chunksInView.end());
-            world_->chunksToGenerate = std::deque<glm::ivec3>();
+            world_->chunksToLoad = std::deque(chunksInView.begin(), chunksInView.end());
             world_->chunksToGenerateMesh = std::deque<glm::ivec3>();
-            for (const auto& chunkPos : chunksInView) {
-                if (world_->chunks.find(chunkPos) == world_->chunks.end()) {
-                    world_->chunksToGenerate.push_back(chunkPos);
-                }
-                else {
-                    const auto& chunk = world_->chunks.at(chunkPos);
 
-                    if (chunk->meshData)
-                        continue;
-
-                    world_->chunksToGenerateMesh.push_back(chunkPos);
-                }
-            }
-
-            world_->chunksToUnload = std::deque<glm::ivec3>();
-            for (const auto& [index, chunk] : world_->chunks) {
-                if (world_->visibleChunks.find(index) == world_->visibleChunks.end()) {
-                    world_->chunksToUnload.push_back(index);
-                }
-            }
-
-            std::sort(world_->chunksToUnload.begin(), world_->chunksToUnload.end(),
-                      [this](const glm::ivec3& a, const glm::ivec3& b) {
-                          const auto distA = glm::distance2(glm::vec3(a), glm::vec3(userChunkIndex_));
-                          const auto distB = glm::distance2(glm::vec3(b), glm::vec3(userChunkIndex_));
-                          return distA > distB;
-                      });
+            // world_->chunksToUnload = std::deque<glm::ivec3>();
+            // for (const auto& [index, chunk] : world_->chunks) {
+            //     if (world_->visibleChunks.find(index) == world_->visibleChunks.end()) {
+            //         world_->chunksToUnload.push_back(index);
+            //     }
+            // }
+            //
+            // std::sort(world_->chunksToUnload.begin(), world_->chunksToUnload.end(),
+            //           [this](const glm::ivec3& a, const glm::ivec3& b) {
+            //               const auto distA = glm::distance2(glm::vec3(a), glm::vec3(userChunkIndex_));
+            //               const auto distB = glm::distance2(glm::vec3(b), glm::vec3(userChunkIndex_));
+            //               return distA > distB;
+            //           });
 
             first_ = false;
         }

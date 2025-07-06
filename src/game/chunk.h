@@ -22,5 +22,8 @@ namespace cubexx {
         ChunkData data{};
         std::unique_ptr<ChunkMeshData> meshData;
         glm::ivec3 index{};
+
+        // UP, DOWN, RIGHT, LEFT, FRONT, BACK
+        std::array<std::shared_ptr<Chunk>, 6> neighbors{};
     };
 }

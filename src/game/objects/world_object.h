@@ -1,26 +1,26 @@
 #pragma once
 
-#include <queue>
-#include <unordered_set>
+#include "bw/engine/base_object.h"
 
 #include "../../core/camera.h"
-#include "../chunk_mesh_generator.h"
 #include "../world_generator.h"
-#include "bw/engine/base_object.h"
-#include "bw/engine/gl.h"
+#include "../config.h"
 
 namespace cubexx {
     class World;
 
     class WorldObject final : public bw::engine::BaseObject {
     public:
-        explicit WorldObject(const std::shared_ptr<Camera>& camera, const std::shared_ptr<World>& world);
+        explicit WorldObject(const std::shared_ptr<Config>& config,
+                             const std::shared_ptr<Camera>& camera,
+                             const std::shared_ptr<World>& world);
 
         void init() override;
 
         void update(float deltaTime) override;
 
     private:
+        std::shared_ptr<Config> config_;
         std::shared_ptr<Camera> camera_;
         std::shared_ptr<World> world_;
 

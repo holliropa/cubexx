@@ -11,9 +11,9 @@ namespace cubexx {
         std::vector<CubeVertex>& vertices,
         std::vector<unsigned int>& indices,
         const glm::vec3 position,
-        glm::vec3 normal,
+        const glm::vec3 normal,
         const glm::vec3* faceVertices,
-        glm::vec2* faceUV
+        const glm::vec2* faceUV
     ) {
         const auto index = vertices.size(); // Track the current vertex index
 
@@ -54,7 +54,7 @@ namespace cubexx {
                         {1, 1, 1},
                         {1, 0, 1}
                     };
-                    glm::vec2 rightUV[4] = {
+                    constexpr glm::vec2 rightUV[4] = {
                         {1, 0},
                         {1, 1},
                         {0, 1},
@@ -67,7 +67,7 @@ namespace cubexx {
                         {0, 1, 1},
                         {0, 1, 0}
                     };
-                    glm::vec2 leftUV[4] = {
+                    constexpr glm::vec2 leftUV[4] = {
                         {0, 0},
                         {1, 0},
                         {1, 1},
@@ -80,7 +80,7 @@ namespace cubexx {
                         {1, 1, 1},
                         {1, 1, 0}
                     };
-                    glm::vec2 topUV[4] = {
+                    constexpr glm::vec2 topUV[4] = {
                         {0, 1},
                         {0, 0},
                         {1, 0},
@@ -93,7 +93,7 @@ namespace cubexx {
                         {1, 0, 1},
                         {0, 0, 1}
                     };
-                    glm::vec2 bottomUV[4] = {
+                    constexpr glm::vec2 bottomUV[4] = {
                         {0, 0},
                         {1, 0},
                         {1, 1},
@@ -106,7 +106,7 @@ namespace cubexx {
                         {1, 1, 1},
                         {0, 1, 1}
                     };
-                    glm::vec2 frontUV[4] = {
+                    constexpr glm::vec2 frontUV[4] = {
                         {0, 0},
                         {1, 0},
                         {1, 1},
@@ -119,7 +119,7 @@ namespace cubexx {
                         {1, 1, 0},
                         {1, 0, 0}
                     };
-                    glm::vec2 backUV[4] = {
+                    constexpr glm::vec2 backUV[4] = {
                         {1, 0},
                         {1, 1},
                         {0, 1},
@@ -127,17 +127,42 @@ namespace cubexx {
                     };
 
 
-                    if (x + 1 == CHUNK_SIZE || chunk->data.cubes[x + 1][y][z] == 0)
-                        addFace(vertices, indices, {x, y, z}, {1, 0, 0}, rightFace, rightUV);
-                    if (x - 1 == -1 || chunk->data.cubes[x - 1][y][z] == 0)
-                        addFace(vertices, indices, {x, y, z}, {-1, 0, 0}, leftFace, leftUV);
-                    if (y + 1 == CHUNK_SIZE || chunk->data.cubes[x][y + 1][z] == 0)
+                    const auto cubeUp = y + 1 == CHUNK_SIZE
+                                            ? chunk->neighbors[0]->data.cubes[x][0][z]
+                                            : chunk->data.cubes[x][y + 1][z];
+                    if (cubeUp == 0)
                         addFace(vertices, indices, {x, y, z}, {0, 1, 0}, topFace, topUV);
-                    if (y - 1 == -1 || chunk->data.cubes[x][y - 1][z] == 0)
+
+
+                    const auto cubeDown = y - 1 == -1
+                                              ? chunk->neighbors[1]->data.cubes[x][CHUNK_SIZE - 1][z]
+                                              : chunk->data.cubes[x][y - 1][z];
+                    if (cubeDown == 0)
                         addFace(vertices, indices, {x, y, z}, {0, -1, 0}, bottomFace, bottomUV);
-                    if (z + 1 == CHUNK_SIZE || chunk->data.cubes[x][y][z + 1] == 0)
+
+                    const auto cubeRight = x + 1 == CHUNK_SIZE
+                                               ? chunk->neighbors[2]->data.cubes[0][y][z]
+                                               : chunk->data.cubes[x + 1][y][z];
+                    if (cubeRight == 0)
+                        addFace(vertices, indices, {x, y, z}, {1, 0, 0}, rightFace, rightUV);
+
+                    const auto cubeLeft = x - 1 == -1
+                                              ? chunk->neighbors[3]->data.cubes[CHUNK_SIZE - 1][y][z]
+                                              : chunk->data.cubes[x - 1][y][z];
+
+                    if (cubeLeft == 0)
+                        addFace(vertices, indices, {x, y, z}, {-1, 0, 0}, leftFace, leftUV);
+
+                    const auto cubeFront = z + 1 == CHUNK_SIZE
+                                               ? chunk->neighbors[4]->data.cubes[x][y][0]
+                                               : chunk->data.cubes[x][y][z + 1];
+                    if (cubeFront == 0)
                         addFace(vertices, indices, {x, y, z}, {0, 0, 1}, frontFace, frontUV);
-                    if (z - 1 == -1 || chunk->data.cubes[x][y][z - 1] == 0)
+
+                    const auto cubeBack = z - 1 == -1
+                                              ? chunk->neighbors[5]->data.cubes[x][y][CHUNK_SIZE - 1]
+                                              : chunk->data.cubes[x][y][z - 1];
+                    if (cubeBack == 0)
                         addFace(vertices, indices, {x, y, z}, {0, 0, -1}, backFace, backUV);
                 }
             }

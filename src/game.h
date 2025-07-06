@@ -7,6 +7,7 @@
 #include "core/camera.h"
 
 #include "game/chunk_mesh_generator.h"
+#include "game/config.h"
 #include "game/world.h"
 #include "game/world_generator.h"
 
@@ -22,6 +23,7 @@ namespace cubexx {
         size_t frame_buffer_event_handle;
 
         std::shared_ptr<World> world_;
+        std::shared_ptr<Config> config_;
         std::shared_ptr<WorldGenerator> world_generator_;
         std::shared_ptr<ChunkMeshGenerator> chunk_mesh_generator_;
     };
