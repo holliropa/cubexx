@@ -15,7 +15,7 @@ namespace cubexx {
             world_->chunksToLoad.pop_front();
 
             std::shared_ptr<Chunk> chunk;
-            if (world_->chunks.find(chunkIndex) != world_->chunks.end())
+            if (world_->chunks.contains(chunkIndex))
                 chunk = world_->chunks[chunkIndex];
             else {
                 world_->chunks.emplace(chunkIndex, std::make_shared<Chunk>());
@@ -97,9 +97,7 @@ namespace cubexx {
                 chunk->neighbors[5] = chunkBack;
             }
 
-
-            if (!chunk->meshData)
-                world_->chunksToGenerateMesh.push_back(chunkIndex);
+            world_->chunksToGenerateMesh.push_back(chunkIndex);
         }
     }
 }

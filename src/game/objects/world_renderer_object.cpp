@@ -46,15 +46,15 @@ void main() {
     vec4 texColor = texture(texture1, TryTestCoords);
     vec3 result = (ambientColor + diffuse) * texColor.rgb;
 
-    FragColor = vec4(result, texColor.a);
+    FragColor = vec4(result.rgb, texColor.a);
 })";
 
-    WorldRendererObject::WorldRendererObject(const std::shared_ptr<World>& world)
-        : world_(world) {}
+    WorldRendererObject::WorldRendererObject(const std::shared_ptr<World>& world,
+                                             const std::shared_ptr<TextureManager>& texture_manager)
+        : world_(world), texture_manager_(texture_manager) {}
 
     void WorldRendererObject::init() {
         init_shader();
-        init_texture();
     }
 
     void WorldRendererObject::render(const bw::engine::Camera& camera) {
@@ -80,13 +80,16 @@ void main() {
         ambientColorUniform.set(glm::value_ptr(ambient));
 
         glad::ActiveTextureUnit(glad::TextureUnit::Unit0);
-        glad::Bind(texture_);
+        glad::Bind(texture_manager_->get_texture());
 
         constexpr int location = 0;
         glad::UniformInt(shaderProgram_, "texture1").set(&location);
 
         view_u.set(glm::value_ptr(view));
         projection_u.set(glm::value_ptr(projection));
+
+        // const auto render_mode = glad::TemporaryPolygonMode(glad::PolyMode::Line);
+        // glad::Disable(glad::Capability::CullFace);
 
         for (const auto& chunkIndex : world_->visibleChunks) {
             if (world_->chunks.find(chunkIndex) == world_->chunks.end()) {
@@ -95,19 +98,17 @@ void main() {
 
             const auto& chunk = world_->chunks.at(chunkIndex);
 
-            if (!chunk->meshData) {
+            if (!chunk->mesh) {
                 continue;
             }
-
-            const auto& meshData = chunk->meshData;
 
             auto model = transform_.getMatrix();
             model = glm::translate(model, glm::vec3(chunk->index) * static_cast<float>(CHUNK_SIZE));
             model_u.set(glm::value_ptr(model));
 
-            glad::Bind(meshData->vertexArray);
+            glad::Bind(chunk->mesh->vao);
             glad::DrawElements(glad::PrimitiveType::Triangles,
-                               meshData->index_count,
+                               chunk->mesh->index_count,
                                glad::IndexType::UnsignedInt);
         }
     }
@@ -121,27 +122,5 @@ void main() {
 
         shaderProgram_.attach_shader(vertexShader, fragmentShader);
         shaderProgram_.link();
-    }
-
-    void WorldRendererObject::init_texture() {
-        int width, height, nrComponents;
-        stbi_set_flip_vertically_on_load(1);
-        if (const auto data = stbi_load("assets/textures/default_block.png", &width, &height, &nrComponents, 0)) {
-            glad::Bind(texture_);
-            texture_.upload(0, glad::PixelDataInternalFormat::RGBA, width, height, glad::PixelDataFormat::RGBA,
-                            glad::PixelDataType::UnsignedByte, data);
-            texture_.generateMipmap();
-
-            texture_.wrapS(glad::WrapMode::Repeat);
-            texture_.wrapT(glad::WrapMode::Repeat);
-            texture_.minFilter(glad::MinFilter::Nearest);
-            texture_.magFilter(glad::MagFilter::Nearest);
-
-            stbi_image_free(data);
-        }
-        else {
-            std::cerr << "Failed to load texture\n";
-            stbi_image_free(data);
-        }
     }
 }

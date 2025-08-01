@@ -39,9 +39,24 @@ namespace cubexx {
 
     void WorldObject::init() {
         userChunkIndex_ = glm::ivec3(glm::floor(camera_->transform.position * (1.0f / CHUNK_SIZE)));
+
+        auto chunksInView = getSpherePoints(userChunkIndex_, static_cast<int>(5));
+
+        std::sort(chunksInView.begin(), chunksInView.end(),
+                  [this](const glm::ivec3& a, const glm::ivec3& b) {
+                      const auto distA = glm::distance2(glm::vec3(a), glm::vec3(userChunkIndex_));
+                      const auto distB = glm::distance2(glm::vec3(b), glm::vec3(userChunkIndex_));
+                      return distA < distB;
+                  });
+
+        world_->visibleChunks = std::unordered_set(chunksInView.begin(), chunksInView.end());
+        world_->chunksToLoad = std::deque(chunksInView.begin(), chunksInView.end());
+        world_->chunksToGenerateMesh = std::deque<glm::ivec3>();
     }
 
     void WorldObject::update(float deltaTime) {
+        // return;
+
         const auto currentChunkIndex = glm::ivec3(glm::floor(camera_->transform.position * (1.0f / CHUNK_SIZE)));
         if (currentChunkIndex != userChunkIndex_ || first_) {
             userChunkIndex_ = currentChunkIndex;

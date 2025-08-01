@@ -16,12 +16,16 @@ namespace cubexx {
 
             const auto& chunk = world_->chunks[chunkIndex];
 
-            if (chunk->meshData) {
+            if (chunk->mesh && !chunk->isDirty) {
                 continue;
             }
 
-            chunk->meshData = std::make_unique<ChunkMeshData>();
+            if (!chunk->mesh) {
+                chunk->mesh = std::make_unique<Mesh>();
+            }
+
             chunk_mesh_generator_->Generate(chunk);
+            chunk->isDirty = false;
         }
     }
 }

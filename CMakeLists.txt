@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.28)
 project("cubexx")
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
 #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows")
 
 add_subdirectory(libs/bw-engine)
+add_subdirectory(libs/bw-pecs)
 add_subdirectory(extern/stb)
 
 add_executable(${PROJECT_NAME}
@@ -15,7 +16,6 @@ add_executable(${PROJECT_NAME}
         src/game/objects/chunk_generator_object.cpp
         src/game/objects/chunk_mesh_generator_object.cpp
         src/game/objects/chunk_unloader_object.cpp
-        src/game/objects/gizmo_object.cpp
         src/game/objects/grid_object.cpp
         src/game/objects/player_object.cpp
         src/game/objects/world_object.cpp
@@ -26,6 +26,7 @@ add_executable(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
         bw::engine
+        bw::pecs
         stb)
 
 set(ASSETS_SOURCE_DIR "${CMAKE_SOURCE_DIR}/assets")

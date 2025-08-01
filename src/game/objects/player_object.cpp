@@ -4,8 +4,8 @@
 #include "bw/engine/input.h"
 
 namespace cubexx {
-    PlayerObject::PlayerObject(const std::shared_ptr<Camera>& camera)
-        : camera_(camera) {}
+    PlayerObject::PlayerObject(const std::shared_ptr<Camera>& camera, const std::shared_ptr<World>& world)
+        : camera_(camera), world_(world) {}
 
     void PlayerObject::init() {
         camera_->transform.position.y = 75.0f;
@@ -38,7 +38,7 @@ namespace cubexx {
 
         // Calculate right and up directions based on forward vector
         glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0.0f, 1.0f, 0.0f)));
-        glm::vec3 up = glm::normalize(glm::cross(right, forward));
+        glm::vec3 up = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f));
 
         // Initialize movement direction vector
         auto movementDirection = glm::vec3(0.0f);
@@ -83,5 +83,126 @@ namespace cubexx {
         // Clamp pitch (x rotation) to avoid flipping, in degrees
         if (camera_->transform.rotation.x > 89.0f) camera_->transform.rotation.x = 89.0f;
         if (camera_->transform.rotation.x < -89.0f) camera_->transform.rotation.x = -89.0f;
+
+        // Improved raycasting with proper face detection
+        auto origin = camera_->transform.position;
+        auto direction = glm::normalize(camera_->transform.getFront());
+
+        RaycastResult raycast = performRaycast(origin, direction, 10.0f);
+
+        if (raycast.hit) {
+            world_->selectedBlock = raycast.blockPosition;
+
+            // Block breaking (left click)
+            if (bw::engine::Input::GetMouseButtonDown(glfw::MouseButton::Left)) {
+                world_->set_block(raycast.blockPosition, CubeType::Air);
+            }
+
+            // Block placement (right click)
+            else if (bw::engine::Input::GetMouseButtonDown(glfw::MouseButton::Right)) {
+                glm::ivec3 placePos = raycast.blockPosition + raycast.faceNormal;
+
+                // Check if placement position is valid
+                if (world_->get_block(placePos) == CubeType::Air && !isPlayerIntersecting(placePos)) {
+                    world_->set_block(placePos, currentBlockType_);
+                }
+            }
+        }
+        else {
+            world_->selectedBlock = std::nullopt;
+        }
+
+        if (bw::engine::Input::GetScrollOffset().y != 0.0f) {
+            auto scrollOffset = bw::engine::Input::GetScrollOffset().y;
+            int current_index = static_cast<int>(currentBlockType_);
+            int new_index = current_index + (scrollOffset > 0.0f ? 1 : -1);
+
+            if (new_index < 1) {
+                currentBlockType_ = CubeType::Stone;
+            }
+            else if (new_index > 3) {
+                currentBlockType_ = CubeType::Grass;
+            }else {
+                currentBlockType_ = static_cast<CubeType>(new_index);
+            }
+        }
+    }
+
+    PlayerObject::RaycastResult PlayerObject::performRaycast(const glm::vec3& origin, const glm::vec3& direction,
+                                                             float maxDistance) const {
+        RaycastResult result;
+        result.hit = false;
+
+        // DDA (Digital Differential Analyzer) algorithm for voxel traversal
+        glm::ivec3 currentBlock = glm::floor(origin);
+        glm::ivec3 step;
+        glm::vec3 tDelta;
+        glm::vec3 tMax;
+
+        // Calculate step direction and initial tMax, tDelta
+        for (int i = 0; i < 3; i++) {
+            if (direction[i] > 0) {
+                step[i] = 1;
+                tMax[i] = (std::floor(origin[i]) + 1.0f - origin[i]) / direction[i];
+            }
+            else if (direction[i] < 0) {
+                step[i] = -1;
+                tMax[i] = (origin[i] - std::floor(origin[i])) / -direction[i];
+            }
+            else {
+                step[i] = 0;
+                tMax[i] = std::numeric_limits<float>::max();
+            }
+            tDelta[i] = std::abs(1.0f / direction[i]);
+        }
+
+        float currentDistance = 0.0f;
+        glm::ivec3 faceNormal(0);
+
+        while (currentDistance < maxDistance) {
+            // Check if current block is solid
+            if (world_->get_block(currentBlock) != CubeType::Air) {
+                result.hit = true;
+                result.blockPosition = currentBlock;
+                result.faceNormal = faceNormal;
+                result.distance = currentDistance;
+                break;
+            }
+
+            // Find which axis to step along (the one with smallest tMax)
+            if (tMax.x < tMax.y && tMax.x < tMax.z) {
+                currentDistance = tMax.x;
+                tMax.x += tDelta.x;
+                currentBlock.x += step.x;
+                faceNormal = glm::ivec3(-step.x, 0, 0); // Normal points back towards previous block
+            }
+            else if (tMax.y < tMax.z) {
+                currentDistance = tMax.y;
+                tMax.y += tDelta.y;
+                currentBlock.y += step.y;
+                faceNormal = glm::ivec3(0, -step.y, 0);
+            }
+            else {
+                currentDistance = tMax.z;
+                tMax.z += tDelta.z;
+                currentBlock.z += step.z;
+                faceNormal = glm::ivec3(0, 0, -step.z);
+            }
+        }
+
+        return result;
+    }
+
+    bool PlayerObject::isPlayerIntersecting(const glm::ivec3& blockPos) const {
+        // Simple collision check - ensure block isn't placed inside player
+        glm::vec3 playerPos = camera_->transform.position;
+        glm::vec3 blockCenter = glm::vec3(blockPos) + glm::vec3(0.5f);
+
+        // Check if player's position is too close to the block center
+        // Assuming player has a collision box of roughly 1.8 units tall and 0.6 units wide
+        glm::vec3 distance = glm::abs(playerPos - blockCenter);
+
+        return (distance.x < 0.5f && distance.z < 0.5f &&
+            playerPos.y > blockCenter.y - 0.5f && playerPos.y < blockCenter.y + 1.3f);
     }
 }

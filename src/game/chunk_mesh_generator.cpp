@@ -38,142 +38,103 @@ namespace cubexx {
         indices.push_back(index + 0);
     }
 
+    constexpr glm::vec3 rightFace[4] = {
+        {1, 0, 1}, {1, 0, 0}, {1, 1, 0}, {1, 1, 1},
+    };
+
+    constexpr glm::vec3 leftFace[4] = {
+        {0, 0, 0}, {0, 0, 1}, {0, 1, 1}, {0, 1, 0}
+    };
+
+    constexpr glm::vec3 topFace[4] = {
+        {0, 1, 0}, {0, 1, 1}, {1, 1, 1}, {1, 1, 0}
+    };
+
+    constexpr glm::vec3 bottomFace[4] = {
+        {0, 0, 0}, {1, 0, 0}, {1, 0, 1}, {0, 0, 1}
+    };
+
+    constexpr glm::vec3 frontFace[4] = {
+        {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}
+    };
+
+    constexpr glm::vec3 backFace[4] = {
+        {1, 0, 0}, {0, 0, 0}, {0, 1, 0}, {1, 1, 0},
+    };
+
+    struct FaceInfo {
+        glm::vec3 normal;
+        const glm::vec3* vertices;
+        glm::ivec3 neighbour_offset;
+        size_t tile_index;
+        int neighbour_index;
+    };
+
+    constexpr FaceInfo face_infos[6] = {
+        {{0, 1, 0}, topFace, {0, 1, 0}, 0, 0},
+        {{0, -1, 0}, bottomFace, {0, -1, 0}, 1, 1},
+        {{1, 0, 0}, rightFace, {1, 0, 0}, 2, 2},
+        {{-1, 0, 0}, leftFace, {-1, 0, 0}, 3, 3},
+        {{0, 0, 1}, frontFace, {0, 0, 1}, 4, 4},
+        {{0, 0, -1}, backFace, {0, 0, -1}, 5, 5},
+    };
+
+
+    ChunkMeshGenerator::ChunkMeshGenerator(const std::shared_ptr<CubeTypeRegistry>& cube_type_registry,
+                                           const std::shared_ptr<TextureManager>& texture_manager)
+        : cube_type_registry_(cube_type_registry),
+          texture_manager_(texture_manager) {}
 
     void ChunkMeshGenerator::Generate(const std::shared_ptr<Chunk>& chunk) {
         std::vector<CubeVertex> vertices;
         std::vector<GLuint> indices;
+        vertices.reserve(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * 6 * 4 / 2);
+        indices.reserve(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * 6 * 6 / 2);
 
         for (int x = 0; x < CHUNK_SIZE; ++x) {
             for (int y = 0; y < CHUNK_SIZE; ++y) {
                 for (int z = 0; z < CHUNK_SIZE; ++z) {
-                    if (chunk->data.cubes[x][y][z] == 0) continue;
+                    const auto type = chunk->data.cubes[x][y][z];
+                    if (type == CubeType::Air) continue;
 
-                    constexpr glm::vec3 rightFace[4] = {
-                        {1, 0, 0},
-                        {1, 1, 0},
-                        {1, 1, 1},
-                        {1, 0, 1}
-                    };
-                    constexpr glm::vec2 rightUV[4] = {
-                        {1, 0},
-                        {1, 1},
-                        {0, 1},
-                        {0, 0},
-                    };
+                    const auto& cube_definition = cube_type_registry_->get_definition(chunk->data.cubes[x][y][z]);
 
-                    constexpr glm::vec3 leftFace[4] = {
-                        {0, 0, 0},
-                        {0, 0, 1},
-                        {0, 1, 1},
-                        {0, 1, 0}
-                    };
-                    constexpr glm::vec2 leftUV[4] = {
-                        {0, 0},
-                        {1, 0},
-                        {1, 1},
-                        {0, 1},
-                    };
+                    for (const auto& [normal,
+                             face_vertices,
+                             neighbour_offset,
+                             tile_index,
+                             neighbour_index] :
+                         face_infos) {
+                        glm::ivec3 offset = glm::ivec3(x, y, z) + neighbour_offset;
 
-                    constexpr glm::vec3 topFace[4] = {
-                        {0, 1, 0},
-                        {0, 1, 1},
-                        {1, 1, 1},
-                        {1, 1, 0}
-                    };
-                    constexpr glm::vec2 topUV[4] = {
-                        {0, 1},
-                        {0, 0},
-                        {1, 0},
-                        {1, 1},
-                    };
+                        auto neighbour_cube = CubeType::Air;
+                        if (offset.x < 0 || offset.x >= CHUNK_SIZE ||
+                            offset.y < 0 || offset.y >= CHUNK_SIZE ||
+                            offset.z < 0 || offset.z >= CHUNK_SIZE) {
+                            const auto& neighbour_chunk = chunk->neighbors[neighbour_index];
+                            const auto neighbour_cube_index = (offset + CHUNK_SIZE) % CHUNK_SIZE;
+                            neighbour_cube = neighbour_chunk->data.cubes[neighbour_cube_index.x][neighbour_cube_index.y]
+                                [neighbour_cube_index.z];
+                        }
+                        else {
+                            neighbour_cube = chunk->data.cubes[offset.x][offset.y][offset.z];
+                        }
 
-                    constexpr glm::vec3 bottomFace[4] = {
-                        {0, 0, 0},
-                        {1, 0, 0},
-                        {1, 0, 1},
-                        {0, 0, 1}
-                    };
-                    constexpr glm::vec2 bottomUV[4] = {
-                        {0, 0},
-                        {1, 0},
-                        {1, 1},
-                        {0, 1},
-                    };
+                        if (neighbour_cube != CubeType::Air)
+                            continue;
 
-                    constexpr glm::vec3 frontFace[4] = {
-                        {0, 0, 1},
-                        {1, 0, 1},
-                        {1, 1, 1},
-                        {0, 1, 1}
-                    };
-                    constexpr glm::vec2 frontUV[4] = {
-                        {0, 0},
-                        {1, 0},
-                        {1, 1},
-                        {0, 1},
-                    };
-
-                    constexpr glm::vec3 backFace[4] = {
-                        {0, 0, 0},
-                        {0, 1, 0},
-                        {1, 1, 0},
-                        {1, 0, 0}
-                    };
-                    constexpr glm::vec2 backUV[4] = {
-                        {1, 0},
-                        {1, 1},
-                        {0, 1},
-                        {0, 0},
-                    };
-
-
-                    const auto cubeUp = y + 1 == CHUNK_SIZE
-                                            ? chunk->neighbors[0]->data.cubes[x][0][z]
-                                            : chunk->data.cubes[x][y + 1][z];
-                    if (cubeUp == 0)
-                        addFace(vertices, indices, {x, y, z}, {0, 1, 0}, topFace, topUV);
-
-
-                    const auto cubeDown = y - 1 == -1
-                                              ? chunk->neighbors[1]->data.cubes[x][CHUNK_SIZE - 1][z]
-                                              : chunk->data.cubes[x][y - 1][z];
-                    if (cubeDown == 0)
-                        addFace(vertices, indices, {x, y, z}, {0, -1, 0}, bottomFace, bottomUV);
-
-                    const auto cubeRight = x + 1 == CHUNK_SIZE
-                                               ? chunk->neighbors[2]->data.cubes[0][y][z]
-                                               : chunk->data.cubes[x + 1][y][z];
-                    if (cubeRight == 0)
-                        addFace(vertices, indices, {x, y, z}, {1, 0, 0}, rightFace, rightUV);
-
-                    const auto cubeLeft = x - 1 == -1
-                                              ? chunk->neighbors[3]->data.cubes[CHUNK_SIZE - 1][y][z]
-                                              : chunk->data.cubes[x - 1][y][z];
-
-                    if (cubeLeft == 0)
-                        addFace(vertices, indices, {x, y, z}, {-1, 0, 0}, leftFace, leftUV);
-
-                    const auto cubeFront = z + 1 == CHUNK_SIZE
-                                               ? chunk->neighbors[4]->data.cubes[x][y][0]
-                                               : chunk->data.cubes[x][y][z + 1];
-                    if (cubeFront == 0)
-                        addFace(vertices, indices, {x, y, z}, {0, 0, 1}, frontFace, frontUV);
-
-                    const auto cubeBack = z - 1 == -1
-                                              ? chunk->neighbors[5]->data.cubes[x][y][CHUNK_SIZE - 1]
-                                              : chunk->data.cubes[x][y][z - 1];
-                    if (cubeBack == 0)
-                        addFace(vertices, indices, {x, y, z}, {0, 0, -1}, backFace, backUV);
+                        const auto uv = texture_manager_->get_tile_uv(cube_definition.faceTiles[tile_index]);
+                        addFace(vertices, indices, {x, y, z}, normal, face_vertices, uv.begin());
+                    }
                 }
             }
         }
 
-        chunk->meshData->index_count = indices.size();
+        chunk->mesh->index_count = indices.size();
 
-        glad::Bind(chunk->meshData->vertexArray);
-
-        chunk->meshData->arrayBuffer.data(sizeof(CubeVertex) * vertices.size(), vertices.data());
-        chunk->meshData->elementArrayBuffer.data(sizeof(GLuint) * indices.size(), indices.data());
+        glad::Bind(chunk->mesh->vao);
+        chunk->mesh->vbo.data(sizeof(CubeVertex) * vertices.size(), vertices.data());
+        chunk->mesh->ebo.data(sizeof(GLuint) * indices.size(), indices.data());
 
         glad::VertexAttribute(0)
             .pointer(3,

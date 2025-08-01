@@ -7,11 +7,12 @@
 
 #include "../world.h"
 #include "../../core/transform.h"
+#include "../cubes/texture_manager.h"
 
 namespace cubexx {
     class WorldRendererObject final : public bw::engine::BaseObject {
     public:
-        explicit WorldRendererObject(const std::shared_ptr<World>& world);
+        explicit WorldRendererObject(const std::shared_ptr<World>& world, const std::shared_ptr<TextureManager>& texture_manager);
 
         void init() override;
 
@@ -19,12 +20,11 @@ namespace cubexx {
 
     private:
         void init_shader();
-        void init_texture();
 
         Transform transform_;
         glad::Program shaderProgram_;
-        glad::Texture2D texture_;
 
         std::shared_ptr<World> world_;
+        std::shared_ptr<TextureManager> texture_manager_;
     };
 }

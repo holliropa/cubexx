@@ -10,6 +10,7 @@
 #include "game/config.h"
 #include "game/world.h"
 #include "game/world_generator.h"
+#include "game/cubes/cube_type_registry.h"
 
 namespace cubexx {
     class Game : public bw::engine::Game {
@@ -24,7 +25,11 @@ namespace cubexx {
 
         std::shared_ptr<World> world_;
         std::shared_ptr<Config> config_;
+        std::shared_ptr<CubeTypeRegistry> cube_type_registry_;
+        std::shared_ptr<TextureManager> texture_manager_;
         std::shared_ptr<WorldGenerator> world_generator_;
         std::shared_ptr<ChunkMeshGenerator> chunk_mesh_generator_;
+
+        void init_cube_type_registry();
     };
 }

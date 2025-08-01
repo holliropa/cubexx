@@ -1,3 +1,6 @@
 [submodule "libs/bw-engine"]
 	path = libs/bw-engine
 	url = https://github.com/holliropa/bw-engine.git
+[submodule "libs/bw-pecs"]
+	path = libs/bw-pecs
+	url = https://github.com/holliropa/pecs.git
