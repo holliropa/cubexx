@@ -79,6 +79,37 @@ namespace cubexx {
         {{0, 0, -1}, backFace, {0, 0, -1}, 5, 5},
     };
 
+    void setup_mesh(Mesh& mesh, const std::vector<CubeVertex>& vertices, const std::vector<GLuint>& indices) {
+        glad::Bind(mesh.vao);
+
+        mesh.vbo.data(sizeof(CubeVertex) * vertices.size(), vertices.data());
+        mesh.ebo.data(sizeof(GLuint) * indices.size(), indices.data());
+
+
+        glad::VertexAttribute(0)
+            .pointer(3,
+                     glad::DataType::Float,
+                     false,
+                     sizeof(CubeVertex))
+            .enable();
+        glad::VertexAttribute(1)
+            .pointer(3,
+                     glad::DataType::Float,
+                     false,
+                     sizeof(CubeVertex),
+                     reinterpret_cast<void*>(offsetof(CubeVertex, normal)))
+            .enable();
+        glad::VertexAttribute(2)
+            .pointer(2,
+                     glad::DataType::Float,
+                     false,
+                     sizeof(CubeVertex),
+                     reinterpret_cast<void*>(offsetof(CubeVertex, uv)))
+            .enable();
+
+        glad::Unbind(mesh.vao);
+    }
+
 
     ChunkMeshGenerator::ChunkMeshGenerator(const std::shared_ptr<CubeTypeRegistry>& cube_type_registry,
                                            const std::shared_ptr<TextureManager>& texture_manager)
@@ -86,10 +117,12 @@ namespace cubexx {
           texture_manager_(texture_manager) {}
 
     void ChunkMeshGenerator::Generate(const std::shared_ptr<Chunk>& chunk) {
-        std::vector<CubeVertex> vertices;
-        std::vector<GLuint> indices;
-        vertices.reserve(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * 6 * 4 / 2);
-        indices.reserve(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * 6 * 6 / 2);
+        std::vector<CubeVertex> solid_mesh_vertices;
+        std::vector<GLuint> solid_mesh_indices;
+        std::vector<CubeVertex> transparent_mesh_vertices;
+        std::vector<GLuint> transparent_mesh_indices;
+        solid_mesh_vertices.reserve(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * 6 * 4 / 2);
+        solid_mesh_indices.reserve(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * 6 * 6 / 2);
 
         for (int x = 0; x < CHUNK_SIZE; ++x) {
             for (int y = 0; y < CHUNK_SIZE; ++y) {
@@ -120,41 +153,33 @@ namespace cubexx {
                             neighbour_cube = chunk->data.cubes[offset.x][offset.y][offset.z];
                         }
 
-                        if (neighbour_cube != CubeType::Air)
-                            continue;
+                        if (type == CubeType::Water) {
+                            if (neighbour_cube != CubeType::Air)
+                                continue;
 
-                        const auto uv = texture_manager_->get_tile_uv(cube_definition.faceTiles[tile_index]);
-                        addFace(vertices, indices, {x, y, z}, normal, face_vertices, uv.begin());
+                            const auto uv = texture_manager_->get_tile_uv(cube_definition.faceTiles[tile_index]);
+                            addFace(transparent_mesh_vertices, transparent_mesh_indices, {x, y, z}, normal,
+                                    face_vertices, uv.begin());
+                        }
+                        else {
+                            if (neighbour_cube != CubeType::Water && neighbour_cube != CubeType::Air)
+                                continue;
+
+                            const auto uv = texture_manager_->get_tile_uv(cube_definition.faceTiles[tile_index]);
+                            addFace(solid_mesh_vertices, solid_mesh_indices, {x, y, z}, normal, face_vertices,
+                                    uv.begin());
+                        }
                     }
                 }
             }
         }
 
-        chunk->mesh->index_count = indices.size();
+        chunk->mesh->index_count = solid_mesh_indices.size();
+        setup_mesh(*chunk->mesh, solid_mesh_vertices, solid_mesh_indices);
 
-        glad::Bind(chunk->mesh->vao);
-        chunk->mesh->vbo.data(sizeof(CubeVertex) * vertices.size(), vertices.data());
-        chunk->mesh->ebo.data(sizeof(GLuint) * indices.size(), indices.data());
-
-        glad::VertexAttribute(0)
-            .pointer(3,
-                     glad::DataType::Float,
-                     false,
-                     sizeof(CubeVertex))
-            .enable();
-        glad::VertexAttribute(1)
-            .pointer(3,
-                     glad::DataType::Float,
-                     false,
-                     sizeof(CubeVertex),
-                     reinterpret_cast<void*>(offsetof(CubeVertex, normal)))
-            .enable();
-        glad::VertexAttribute(2)
-            .pointer(2,
-                     glad::DataType::Float,
-                     false,
-                     sizeof(CubeVertex),
-                     reinterpret_cast<void*>(offsetof(CubeVertex, uv)))
-            .enable();
+        if (!transparent_mesh_indices.empty()) {
+            chunk->transparent_mesh->index_count = transparent_mesh_indices.size();
+            setup_mesh(*chunk->transparent_mesh, transparent_mesh_vertices, transparent_mesh_indices);
+        }
     }
 }

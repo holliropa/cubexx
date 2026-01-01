@@ -111,6 +111,30 @@ void main() {
                                chunk->mesh->index_count,
                                glad::IndexType::UnsignedInt);
         }
+
+        glad::TemporaryDepthMask guard1(false);
+        glad::TemporaryCapability guard2(glad::Capability::CullFace, false);
+
+        for (const auto& chunkIndex : world_->visibleChunks) {
+            if (world_->chunks.find(chunkIndex) == world_->chunks.end()) {
+                continue;
+            }
+
+            const auto& chunk = world_->chunks.at(chunkIndex);
+
+            if (!chunk->transparent_mesh) {
+                continue;
+            }
+
+            auto model = transform_.getMatrix();
+            model = glm::translate(model, glm::vec3(chunk->index) * static_cast<float>(CHUNK_SIZE));
+            model_u.set(glm::value_ptr(model));
+
+            glad::Bind(chunk->transparent_mesh->vao);
+            glad::DrawElements(glad::PrimitiveType::Triangles,
+                               chunk->transparent_mesh->index_count,
+                               glad::IndexType::UnsignedInt);
+        }
     }
 
     void WorldRendererObject::init_shader() {

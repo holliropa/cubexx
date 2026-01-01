@@ -42,6 +42,12 @@ namespace cubexx {
         // Block placement related
         CubeType currentBlockType_ = CubeType::Stone; // Default block to place
 
+        enum class GameMode {
+            Survival,
+            Creative
+        };
+        GameMode gameMode_ = GameMode::Survival;
+
         [[nodiscard]] RaycastResult performRaycast(const glm::vec3& origin, const glm::vec3& direction,
                                                    float maxDistance) const;
         [[nodiscard]] bool isPlayerIntersecting(const glm::ivec3& blockPos) const;

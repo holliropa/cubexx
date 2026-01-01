@@ -10,8 +10,9 @@ namespace cubexx {
         void load_texture(const std::string& path) {
             int width, height, nrComponents;
             stbi_set_flip_vertically_on_load(1);
-            if (const auto data = stbi_load(path.c_str(), &width, &height, &nrComponents, 0)) {
+            if (const auto data = stbi_load(path.c_str(), &width, &height, &nrComponents, 4)) {
                 glad::Bind(texture_);
+                std::cout << "TEXTURE CHANNELS: " << nrComponents << std::endl;
                 texture_.upload(0, glad::PixelDataInternalFormat::RGBA, width, height, glad::PixelDataFormat::RGBA,
                                 glad::PixelDataType::UnsignedByte, data);
                 texture_.generateMipmap();

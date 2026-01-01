@@ -81,5 +81,7 @@ namespace cubexx {
                                                  CubeTypeDefinition{"Stone", 1});
         cube_type_registry_->register_definition(CubeType::Grass,
                                                  CubeTypeDefinition{"Grass", 2});
+        cube_type_registry_->register_definition(CubeType::Water,
+                                                 CubeTypeDefinition{"Water", 3});
     }
 }

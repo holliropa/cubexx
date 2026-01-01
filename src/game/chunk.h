@@ -11,11 +11,13 @@ namespace cubexx {
     struct ChunkData {
         std::array<std::array<std::array<CubeType, CHUNK_SIZE>, CHUNK_SIZE>, CHUNK_SIZE> cubes;
         bool isEmpty = true;
+        bool hasTransparent = false;
     };
 
     struct Chunk {
         ChunkData data{};
         std::unique_ptr<Mesh> mesh;
+        std::unique_ptr<Mesh> transparent_mesh;
         glm::ivec3 index{};
         bool isDirty = false;
 

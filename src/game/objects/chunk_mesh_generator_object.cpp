@@ -24,6 +24,10 @@ namespace cubexx {
                 chunk->mesh = std::make_unique<Mesh>();
             }
 
+            if (!chunk->transparent_mesh) {
+                chunk->transparent_mesh = std::make_unique<Mesh>();
+            }
+
             chunk_mesh_generator_->Generate(chunk);
             chunk->isDirty = false;
         }

@@ -4,6 +4,7 @@
 
 #include <iostream>
 
+#include "bw/engine/engine.h"
 #include "bw/engine/input.h"
 
 namespace cubexx {
@@ -18,6 +19,10 @@ namespace cubexx {
     }
 
     void PlayerObject::update(const float deltaTime) {
+        if (bw::engine::Input::GetKeyDown(glfw::KeyCode::G)) {
+            gameMode_ = (gameMode_ == GameMode::Creative) ? GameMode::Survival : GameMode::Creative;
+        }
+
         update_rotation(deltaTime);
         update_movement(deltaTime);
         update_physics(deltaTime);
@@ -58,7 +63,8 @@ namespace cubexx {
 
         while (currentDistance < maxDistance) {
             // Check if current block is solid
-            if (world_->get_block(currentBlock) != CubeType::Air) {
+            const auto block = world_->get_block(currentBlock);
+            if (block != CubeType::Air && block != CubeType::Water) {
                 result.hit = true;
                 result.blockPosition = currentBlock;
                 result.faceNormal = faceNormal;
@@ -145,24 +151,44 @@ namespace cubexx {
             movementDirection += right;
         }
 
-        if (onGround_ && bw::engine::Input::GetKeyPressed(glfw::KeyCode::Space)) {
-            movementDirection.y = 1.0f;
-        }
+        if (gameMode_ == GameMode::Survival) {
+            if (onGround_ && bw::engine::Input::GetKeyPressed(glfw::KeyCode::Space)) {
+                movementDirection.y = 1.0f;
+            }
 
-        if (glm::length(movementDirection) > 0.0f) {
-            movementDirection = glm::normalize(movementDirection);
-            velocity_.x = movementDirection.x * speed_;
-            velocity_.z = movementDirection.z * speed_;
-            if (movementDirection.y > 0.0f) {
-                velocity_.y = jumpStrength_;
-                onGround_ = false;
+            if (glm::length(movementDirection) > 0.0f) {
+                movementDirection = glm::normalize(movementDirection);
+                velocity_.x = movementDirection.x * speed_;
+                velocity_.z = movementDirection.z * speed_;
+                if (movementDirection.y > 0.0f) {
+                    velocity_.y = jumpStrength_;
+                    onGround_ = false;
+                }
+            }
+        }
+        else {
+            if (bw::engine::Input::GetKeyPressed(glfw::KeyCode::Space)) {
+                camera_->transform.position.y += 10.0f * deltaTime;
+            }
+
+            if (bw::engine::Input::GetKeyPressed(glfw::KeyCode::LeftShift)) {
+                camera_->transform.position.y -= 10.0f * deltaTime;
+            }
+
+
+            if (glm::length(movementDirection) > 0.0f) {
+                movementDirection = glm::normalize(movementDirection);
+                velocity_ = movementDirection * (speed_ * 1.5f);
+            }
+            else {
+                velocity_ = glm::zero<glm::vec3>();
             }
         }
     }
 
     void PlayerObject::update_physics(const float deltaTime) {
-        // Apply gravity if not on ground
-        if (!onGround_) {
+        // Apply gravity if not on ground and only in Survival mode
+        if (gameMode_ == GameMode::Survival && !onGround_) {
             velocity_.y -= gravity_ * deltaTime;
         }
 
@@ -170,9 +196,11 @@ namespace cubexx {
         newPosition = resolve_collision(camera_->transform.position, newPosition);
         camera_->transform.position = newPosition;
 
-        // Apply friction to horizontal movement
-        velocity_.x *= friction_;
-        velocity_.z *= friction_;
+        // Apply friction to horizontal movement only in Survival
+        if (gameMode_ == GameMode::Survival) {
+            velocity_.x *= friction_;
+            velocity_.z *= friction_;
+        }
     }
 
     void PlayerObject::update_selected_block(float deltaTime) {
@@ -253,7 +281,7 @@ namespace cubexx {
 
     bool PlayerObject::is_block_solid(const glm::ivec3& blockPos) const {
         CubeType blockType = world_->get_block(blockPos);
-        return blockType != CubeType::Air;
+        return blockType != CubeType::Air && blockType != CubeType::Water;
     }
 
     bool PlayerObject::check_collision(const glm::vec3& position) const {
