@@ -93,33 +93,36 @@ void main() {
         // const auto render_mode = glad::TemporaryPolygonMode(glad::PolyMode::Line);
         // glad::Disable(glad::Capability::CullFace);
 
-        for (const auto& chunkIndex : world_->visibleChunks) {
-            if (world_->chunks.find(chunkIndex) == world_->chunks.end()) {
-                continue;
+        {
+
+            // glad::TemporaryPolygonMode _(glad::PolyMode::Line);
+            for (const auto& chunkIndex : world_->visibleChunks) {
+                if (world_->chunks.find(chunkIndex) == world_->chunks.end()) {
+                    continue;
+                }
+
+                const auto& chunk = world_->chunks.at(chunkIndex);
+
+                if (!chunk->mesh) {
+                    continue;
+                }
+
+                glm::vec3 min = glm::vec3(chunk->index) * static_cast<float>(CHUNK_SIZE);
+                glm::vec3 max = min + glm::vec3(CHUNK_SIZE);
+                if (!frustum.isBoxVisible(min, max)) {
+                    continue;
+                }
+
+                auto model = transform_.getMatrix();
+                model = glm::translate(model, glm::vec3(chunk->index) * static_cast<float>(CHUNK_SIZE));
+                model_u.set(glm::value_ptr(model));
+
+                glad::Bind(chunk->mesh->vao);
+                glad::DrawElements(glad::PrimitiveType::Triangles,
+                                   chunk->mesh->index_count,
+                                   glad::IndexType::UnsignedInt);
             }
-
-            const auto& chunk = world_->chunks.at(chunkIndex);
-
-            if (!chunk->mesh) {
-                continue;
-            }
-
-            glm::vec3 min = glm::vec3(chunk->index) * static_cast<float>(CHUNK_SIZE);
-            glm::vec3 max = min + glm::vec3(CHUNK_SIZE);
-            if (!frustum.isBoxVisible(min, max)) {
-                continue;
-            }
-
-            auto model = transform_.getMatrix();
-            model = glm::translate(model, glm::vec3(chunk->index) * static_cast<float>(CHUNK_SIZE));
-            model_u.set(glm::value_ptr(model));
-
-            glad::Bind(chunk->mesh->vao);
-            glad::DrawElements(glad::PrimitiveType::Triangles,
-                               chunk->mesh->index_count,
-                               glad::IndexType::UnsignedInt);
         }
-
         glad::TemporaryDepthMask guard1(false);
         glad::TemporaryCapability guard2(glad::Capability::CullFace, false);
 

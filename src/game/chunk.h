@@ -20,6 +20,7 @@ namespace cubexx {
         std::unique_ptr<Mesh> transparent_mesh;
         glm::ivec3 index{};
         bool isDirty = false;
+        bool isGeneratingMesh;
 
         // UP, DOWN, RIGHT, LEFT, FRONT, BACK
         std::array<std::shared_ptr<Chunk>, 6> neighbors{};
