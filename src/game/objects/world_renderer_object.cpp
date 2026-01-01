@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "stb_image.h"
+#include "../../core/frustum.h"
 
 namespace cubexx {
     auto worldVertexShaderSource = R"(
@@ -60,6 +61,7 @@ void main() {
     void WorldRendererObject::render(const bw::engine::Camera& camera) {
         auto view = camera.get_view();
         auto projection = camera.get_projection();
+        const auto frustum = Frustum::fromViewProjection(projection * view);
 
         glad::Bind(shaderProgram_);
         auto model_u = glad::UniformMat4(shaderProgram_, "model");
@@ -102,6 +104,12 @@ void main() {
                 continue;
             }
 
+            glm::vec3 min = glm::vec3(chunk->index) * static_cast<float>(CHUNK_SIZE);
+            glm::vec3 max = min + glm::vec3(CHUNK_SIZE);
+            if (!frustum.isBoxVisible(min, max)) {
+                continue;
+            }
+
             auto model = transform_.getMatrix();
             model = glm::translate(model, glm::vec3(chunk->index) * static_cast<float>(CHUNK_SIZE));
             model_u.set(glm::value_ptr(model));
@@ -123,6 +131,12 @@ void main() {
             const auto& chunk = world_->chunks.at(chunkIndex);
 
             if (!chunk->transparent_mesh) {
+                continue;
+            }
+
+            glm::vec3 min = glm::vec3(chunk->index) * static_cast<float>(CHUNK_SIZE);
+            glm::vec3 max = min + glm::vec3(CHUNK_SIZE);
+            if (!frustum.isBoxVisible(min, max)) {
                 continue;
             }
 
