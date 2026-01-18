@@ -28,6 +28,14 @@ namespace cubexx {
                      sizeof(CubeVertex),
                      reinterpret_cast<void*>(offsetof(CubeVertex, uv)))
             .enable();
+        glad::VertexAttribute(3)
+            .pointer(4,
+                     glad::DataType::Float,
+                     false,
+                     sizeof(CubeVertex),
+                     reinterpret_cast<void*>(offsetof(CubeVertex, tile_bounds)))
+            .enable();
+
 
         glad::Unbind(mesh.vao);
     }

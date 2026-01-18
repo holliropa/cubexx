@@ -3,59 +3,25 @@
 #include <iostream>
 
 #include "stb_image.h"
+#include "../../core/file_utils.h"
 #include "../../core/frustum.h"
+#include "bw/engine/input.h"
 
 namespace cubexx {
-    auto worldVertexShaderSource = R"(
-#version 330 core
-layout(location = 0) in vec3 aPos;
-layout(location = 1) in vec3 aNormal;
-layout(location = 2) in vec2 aTexCoord;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-
-out vec3 Normal;
-out vec2 TryTestCoords;
-
-void main() {
-    TryTestCoords = aTexCoord;
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
-    Normal = mat3(transpose(inverse(model))) * aNormal;
-})";
-
-    auto worldFragmentShaderSource = R"(
-#version 330 core
-in vec3 Normal;
-in vec2 TryTestCoords;
-
-out vec4 FragColor;
-
-uniform sampler2D texture1;
-uniform vec3 lightDir;
-uniform vec3 lightColor;
-uniform vec3 ambientColor;
-
-void main() {
-    vec3 norm = normalize(Normal);
-    vec3 lightDirNorm = normalize(-lightDir);
-
-    float diff = max(dot(norm, lightDirNorm), 0.0);
-    vec3 diffuse = diff * lightColor;
-
-    vec4 texColor = texture(texture1, TryTestCoords);
-    vec3 result = (ambientColor + diffuse) * texColor.rgb;
-
-    FragColor = vec4(result.rgb, texColor.a);
-})";
-
     WorldRendererObject::WorldRendererObject(const std::shared_ptr<World>& world,
-                                             const std::shared_ptr<TextureManager>& texture_manager)
-        : world_(world), texture_manager_(texture_manager) {}
+                                             const std::shared_ptr<TextureManager>& texture_manager,
+                                             const std::shared_ptr<Camera>& camera)
+        : world_(world), texture_manager_(texture_manager), camera_(camera) {}
 
     void WorldRendererObject::init() {
         init_shader();
+    }
+
+    void WorldRendererObject::update(float deltaTime) {
+        if (bw::engine::Input::GetKeyDown(glfw::KeyCode::P)) {
+            std::cout << "PolyMode: " << (isPolyMode ? "ON" : "OFF") << std::endl;
+            isPolyMode = !isPolyMode;
+        }
     }
 
     void WorldRendererObject::render(const bw::engine::Camera& camera) {
@@ -90,59 +56,79 @@ void main() {
         view_u.set(glm::value_ptr(view));
         projection_u.set(glm::value_ptr(projection));
 
-        // const auto render_mode = glad::TemporaryPolygonMode(glad::PolyMode::Line);
-        // glad::Disable(glad::Capability::CullFace);
+        glad::TemporaryPolygonMode polygon_mode(isPolyMode ? glad::PolyMode::Line : glad::PolyMode::Fill);
+        // glad::TemporaryCapability cullFaceOff(glad::Capability::CullFace, false);
+
+        std::vector<std::shared_ptr<Chunk>> opaqueDraw;
+        std::vector<std::shared_ptr<Chunk>> transparentDraw;
 
         {
+            std::deque<std::shared_ptr<Chunk>> queue;
+            std::unordered_set<glm::ivec3> visited;
 
-            // glad::TemporaryPolygonMode _(glad::PolyMode::Line);
-            for (const auto& chunkIndex : world_->visibleChunks) {
-                if (world_->chunks.find(chunkIndex) == world_->chunks.end()) {
-                    continue;
-                }
+            glm::ivec3 camIndex = glm::floor(camera_->transform.position / static_cast<float>(CHUNK_SIZE));
+            if (world_->chunks.contains(camIndex)) {
+                queue.push_back(world_->chunks.at(camIndex));
+                visited.insert(camIndex);
+            }
 
-                const auto& chunk = world_->chunks.at(chunkIndex);
-
-                if (!chunk->mesh) {
-                    continue;
-                }
+            while (!queue.empty()) {
+                auto chunk = queue.front();
+                queue.pop_front();
 
                 glm::vec3 min = glm::vec3(chunk->index) * static_cast<float>(CHUNK_SIZE);
                 glm::vec3 max = min + glm::vec3(CHUNK_SIZE);
+
                 if (!frustum.isBoxVisible(min, max)) {
                     continue;
                 }
 
-                auto model = transform_.getMatrix();
-                model = glm::translate(model, glm::vec3(chunk->index) * static_cast<float>(CHUNK_SIZE));
-                model_u.set(glm::value_ptr(model));
+                if (chunk->mesh) {
+                    opaqueDraw.push_back(chunk);
+                }
+                if (chunk->transparent_mesh) {
+                    transparentDraw.push_back(chunk);
+                }
 
-                glad::Bind(chunk->mesh->vao);
-                glad::DrawElements(glad::PrimitiveType::Triangles,
-                                   chunk->mesh->index_count,
-                                   glad::IndexType::UnsignedInt);
+                if (chunk->data.isOpaque) {
+                    continue;
+                }
+
+                for (const auto& neighbor : chunk->neighbors) {
+                    if (!neighbor) continue;
+                    if (visited.contains(neighbor->index)) continue;
+
+                    visited.insert(neighbor->index);
+                    queue.push_back(neighbor);
+                }
             }
         }
-        glad::TemporaryDepthMask guard1(false);
-        glad::TemporaryCapability guard2(glad::Capability::CullFace, false);
 
-        for (const auto& chunkIndex : world_->visibleChunks) {
-            if (world_->chunks.find(chunkIndex) == world_->chunks.end()) {
-                continue;
-            }
+        for (const auto& chunk : opaqueDraw) {
+            auto model = transform_.getMatrix();
+            model = glm::translate(model, glm::vec3(chunk->index) * static_cast<float>(CHUNK_SIZE));
+            model_u.set(glm::value_ptr(model));
 
-            const auto& chunk = world_->chunks.at(chunkIndex);
+            glad::Bind(chunk->mesh->vao);
+            glad::DrawElements(glad::PrimitiveType::Triangles,
+                               chunk->mesh->index_count,
+                               glad::IndexType::UnsignedInt);
+        }
 
-            if (!chunk->transparent_mesh) {
-                continue;
-            }
+        const auto camPosition = camera_->transform.position;
+        std::sort(transparentDraw.begin(), transparentDraw.end(),
+                  [&](const auto& a, const auto& b) {
+                      const glm::vec3 aCenter = (glm::vec3(a->index) * static_cast<float>(CHUNK_SIZE))
+                          + glm::vec3(static_cast<float>(CHUNK_SIZE) * 0.5f);
+                      const glm::vec3 bCenter = (glm::vec3(a->index) * static_cast<float>(CHUNK_SIZE))
+                          + glm::vec3(static_cast<float>(CHUNK_SIZE) * 0.5f);
 
-            glm::vec3 min = glm::vec3(chunk->index) * static_cast<float>(CHUNK_SIZE);
-            glm::vec3 max = min + glm::vec3(CHUNK_SIZE);
-            if (!frustum.isBoxVisible(min, max)) {
-                continue;
-            }
+                      const float da = glm::length2(aCenter - camPosition);
+                      const float db = glm::length2(bCenter - camPosition);
+                      return da < db;
+                  });
 
+        for (const auto& chunk : transparentDraw) {
             auto model = transform_.getMatrix();
             model = glm::translate(model, glm::vec3(chunk->index) * static_cast<float>(CHUNK_SIZE));
             model_u.set(glm::value_ptr(model));
@@ -156,10 +142,12 @@ void main() {
 
     void WorldRendererObject::init_shader() {
         auto vertexShader = glad::VertexShader();
-        vertexShader.set_source(worldVertexShaderSource);
+        const auto vSource = loadFile("assets/shaders/default.vert");
+        vertexShader.set_source(vSource);
 
         auto fragmentShader = glad::FragmentShader();
-        fragmentShader.set_source(worldFragmentShaderSource);
+        const auto fSource = loadFile("assets/shaders/default.frag");
+        fragmentShader.set_source(fSource);
 
         shaderProgram_.attach_shader(vertexShader, fragmentShader);
         shaderProgram_.link();

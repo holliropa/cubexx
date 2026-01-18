@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../core/mesh.h"
-#include "bw/engine/gl.h"
 #include "bw/engine/glm.h"
 #include "cubes/cube_type.h"
 
@@ -12,6 +11,7 @@ namespace cubexx {
         std::array<std::array<std::array<CubeType, CHUNK_SIZE>, CHUNK_SIZE>, CHUNK_SIZE> cubes;
         bool isEmpty = true;
         bool hasTransparent = false;
+        bool isOpaque = false;
     };
 
     struct Chunk {
@@ -24,5 +24,6 @@ namespace cubexx {
 
         // UP, DOWN, RIGHT, LEFT, FRONT, BACK
         std::array<std::shared_ptr<Chunk>, 6> neighbors{};
+
     };
 }

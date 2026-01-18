@@ -20,6 +20,7 @@ namespace cubexx {
             });
 
         window_.setCursorMode(glfw::CursorMode::Disabled);
+        window_.setSwapInterval(0);
 
         int w_width, w_height;
         window_.getWindowSize(&w_width, &w_height);
@@ -53,7 +54,7 @@ namespace cubexx {
         const auto chunk_generator = std::make_shared<ChunkGeneratorObject>(config_, world_, world_generator_);
         const auto chunk_mesh_generator = std::make_shared<ChunkMeshGeneratorObject>(
             config_, world_, chunk_mesh_generator_);
-        const auto worldRenderer = std::make_shared<WorldRendererObject>(world_, texture_manager_);
+        const auto worldRenderer = std::make_shared<WorldRendererObject>(world_, texture_manager_, main_camera_);
         const auto chunk_unloader = std::make_shared<ChunkUnloaderObject>(world_);
         const auto block_outline = std::make_shared<BlockOutlineObject>(world_);
         const auto crosshair = std::make_shared<CrosshairObject>();

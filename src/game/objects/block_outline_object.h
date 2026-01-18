@@ -65,7 +65,7 @@ namespace cubexx {
             glad::Enable(glad::Capability::PolygonOffsetLine);
             glad::PolygonOffset(-3.0f, -1.0f);
             const auto temp_poly_mode = glad::TemporaryPolygonMode(glad::PolyMode::Line);
-            glad::LineWidth(5.0f);
+            glad::TemporaryLineWidth _(5.0f);
 
             glad::Bind(shaderProgram_);
 
