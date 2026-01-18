@@ -43,7 +43,7 @@ namespace cubexx {
         world_ = std::make_shared<World>();
         cube_type_registry_ = std::make_shared<CubeTypeRegistry>();
         texture_manager_ = std::make_shared<TextureManager>();
-        world_generator_ = std::make_shared<WorldGenerator>();
+        world_generator_ = std::make_shared<worldgen::WorldGenerator>(1337u, worldgen::Params{});
         chunk_mesh_generator_ = std::make_shared<ChunkMeshGenerator>(cube_type_registry_, texture_manager_);
         texture_manager_->load_texture("assets/textures/texture_atlas.png");
 

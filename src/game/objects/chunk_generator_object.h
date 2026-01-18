@@ -12,13 +12,13 @@ namespace cubexx {
     public:
         ChunkGeneratorObject(const std::shared_ptr<Config>& config,
                              const std::shared_ptr<World>& world,
-                             const std::shared_ptr<WorldGenerator>& worldGenerator);
+                             const std::shared_ptr<worldgen::WorldGenerator>& worldGenerator);
 
         void update(float deltaTime) override;
 
     private:
         std::shared_ptr<Config> config_;
         std::shared_ptr<World> world_;
-        std::shared_ptr<WorldGenerator> worldGenerator_;
+        std::shared_ptr<worldgen::WorldGenerator> worldGenerator_;
     };
 }

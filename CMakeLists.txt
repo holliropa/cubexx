@@ -20,9 +20,9 @@ add_executable(${PROJECT_NAME}
         src/game/objects/player_object.cpp
         src/game/objects/world_object.cpp
         src/game/objects/world_renderer_object.cpp
-#        src/game/chunk_mesh_generator.cpp
         src/game/chunk_greedy_mesh_generator.cpp
         src/game/world_generator.cpp
+        src/game/worldgen_noise.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

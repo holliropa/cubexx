@@ -3,7 +3,7 @@
 namespace cubexx {
     ChunkGeneratorObject::ChunkGeneratorObject(const std::shared_ptr<Config>& config,
                                                const std::shared_ptr<World>& world,
-                                               const std::shared_ptr<WorldGenerator>& worldGenerator)
+                                               const std::shared_ptr<worldgen::WorldGenerator>& worldGenerator)
         : config_(config), world_(world), worldGenerator_(worldGenerator) {}
 
     void ChunkGeneratorObject::update(float deltaTime) {

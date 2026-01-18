@@ -27,7 +27,7 @@ namespace cubexx {
         std::shared_ptr<Config> config_;
         std::shared_ptr<CubeTypeRegistry> cube_type_registry_;
         std::shared_ptr<TextureManager> texture_manager_;
-        std::shared_ptr<WorldGenerator> world_generator_;
+        std::shared_ptr<worldgen::WorldGenerator> world_generator_;
         std::shared_ptr<ChunkMeshGenerator> chunk_mesh_generator_;
 
         void init_cube_type_registry();
